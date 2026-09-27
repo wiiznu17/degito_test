@@ -15,11 +15,9 @@ router.get("/", async (req, res) => {
         p.name,
         p.status,
         p.client_id,
-        c.name AS client_name,
-        n.id AS note_id
+        c.name AS client_name
       FROM projects p
       JOIN clients c ON c.id = p.client_id
-      LEFT JOIN project_notes n ON n.project_id = p.id
       ORDER BY p.id ASC
     `);
     res.json(result.rows);
