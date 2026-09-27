@@ -3,6 +3,8 @@ const pool = require("../db");
 
 const router = express.Router();
 
+const ALLOWED_STATUSES = ["planning", "in_progress", "completed"];
+
 // GET /api/projects
 // Returns all projects with their client name.
 router.get("/", async (req, res) => {
@@ -33,11 +35,36 @@ router.post("/", async (req, res) => {
   try {
     const { name, client_id, status } = req.body;
 
+    // Validate project name
+    if (!name || typeof name !== "string" || name.trim() === "") {
+      return res.status(400).json({ error: "Project name is required" });
+    }
+
+    // Validate client_id
+    const clientIdNum = Number(client_id);
+    if (!client_id || !Number.isInteger(clientIdNum) || clientIdNum <= 0) {
+      return res.status(400).json({ error: "Valid client_id is required" });
+    }
+
+    // Check if client exists
+    const clientCheck = await pool.query("SELECT id FROM clients WHERE id = $1", [clientIdNum]);
+    if (clientCheck.rows.length === 0) {
+      return res.status(400).json({ error: "Client not found" });
+    }
+
+    // Validate status (optional, defaults to 'planning')
+    const projectStatus = status || "planning";
+    if (!ALLOWED_STATUSES.includes(projectStatus)) {
+      return res.status(400).json({
+        error: `Invalid status. Must be one of: ${ALLOWED_STATUSES.join(", ")}`,
+      });
+    }
+
     const result = await pool.query(
       `INSERT INTO projects (name, client_id, status)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [name, client_id, status || "planning"]
+      [name.trim(), clientIdNum, projectStatus]
     );
 
     res.status(201).json(result.rows[0]);
@@ -53,6 +80,12 @@ router.patch("/:id/status", async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+
+    if (!status || !ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({
+        error: `Invalid status. Must be one of: ${ALLOWED_STATUSES.join(", ")}`,
+      });
+    }
 
     const result = await pool.query(
       `UPDATE projects SET status = $1 WHERE id = $2 RETURNING *`,
