@@ -7,6 +7,7 @@ export default function App() {
   const [projects, setProjects] = useState([]);
   const [clients, setClients] = useState([]);
   const [newProject, setNewProject] = useState({ name: "", client_id: "" });
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchProjects();
@@ -14,31 +15,45 @@ export default function App() {
   }, []);
 
   function fetchProjects() {
-    getProjects().then(setProjects);
+    getProjects()
+      .then(setProjects)
+      .catch((err) => setError(err.message));
   }
 
   function fetchClients() {
-    getClients().then(setClients);
+    getClients()
+      .then(setClients)
+      .catch((err) => setError(err.message));
   }
 
   function handleStatusChange(projectId, newStatus) {
-    updateStatus(projectId, newStatus).then(() => {
-      const updateProjects = projects.map((p) =>
-        p.id === projectId ? { ...p, status: newStatus } : p
-      );
-      setProjects(updateProjects);
-    });
+    setError("");
+    updateStatus(projectId, newStatus)
+      .then(() => {
+        const updateProjects = projects.map((p) =>
+          p.id === projectId ? { ...p, status: newStatus } : p
+        );
+        setProjects(updateProjects);
+      })
+      .catch((err) => {
+        setError(err.message);
+      });
   }
 
   function handleCreate(e) {
     e.preventDefault();
+    setError("");
     createProject({
       name: newProject.name,
       client_id: Number(newProject.client_id),
-    }).then(() => {
-      setNewProject({ name: "", client_id: "" });
-      fetchProjects();
-    });
+    })
+      .then(() => {
+        setNewProject({ name: "", client_id: "" });
+        fetchProjects();
+      })
+      .catch((err) => {
+        setError(err.message);
+      });
   }
 
   return (
@@ -47,6 +62,15 @@ export default function App() {
         <h1>Client Project Tracker</h1>
         <p>Internal tool for tracking active client projects.</p>
       </header>
+
+      {error && (
+        <div className="error-banner">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError("")} aria-label="Close error">
+            &times;
+          </button>
+        </div>
+      )}
 
       <section className="new-project">
         <h2>Add Project</h2>
