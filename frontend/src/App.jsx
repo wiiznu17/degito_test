@@ -23,11 +23,10 @@ export default function App() {
 
   function handleStatusChange(projectId, newStatus) {
     updateStatus(projectId, newStatus).then(() => {
-      const project = projects.find((p) => p.id === projectId);
-      if (project) {
-        project.status = newStatus;
-      }
-      setProjects(projects);
+      const updateProjects = projects.map((p) =>
+        p.id === projectId ? { ...p, status: newStatus } : p
+      );
+      setProjects(updateProjects);
     });
   }
 
