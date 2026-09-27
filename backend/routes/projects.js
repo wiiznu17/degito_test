@@ -9,7 +9,10 @@ const ALLOWED_STATUSES = ["planning", "in_progress", "completed"];
 // Returns all projects with their client name.
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query(`
+    const { client, search } = req.query;
+    const queryTerm = (client || search || "").trim();
+
+    let query = `
       SELECT
         p.id,
         p.name,
@@ -18,8 +21,17 @@ router.get("/", async (req, res) => {
         c.name AS client_name
       FROM projects p
       JOIN clients c ON c.id = p.client_id
-      ORDER BY p.id ASC
-    `);
+    `;
+    const params = [];
+
+    if (queryTerm) {
+      query += ` WHERE c.name ILIKE $1`;
+      params.push(`%${queryTerm}%`);
+    }
+
+    query += ` ORDER BY p.id ASC`;
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error(err);

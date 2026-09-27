@@ -94,3 +94,44 @@ td {
   font-size: 12px;
   margin-right: 8px;
 }
+
+.project-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.project-list-header h2 {
+  margin: 0;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-bar input {
+  min-width: 220px;
+}
+
+.clear-search-btn {
+  background: #e5e5e5;
+  color: #333;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.clear-search-btn:hover {
+  background: #d4d4d4;
+}
+
+.no-projects {
+  text-align: center;
+  color: #888;
+  padding: 24px 8px;
+  font-style: italic;
+}

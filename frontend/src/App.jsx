@@ -7,6 +7,8 @@ export default function App() {
   const [projects, setProjects] = useState([]);
   const [clients, setClients] = useState([]);
   const [newProject, setNewProject] = useState({ name: "", client_id: "" });
+  const [searchInput, setSearchInput] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -14,8 +16,8 @@ export default function App() {
     fetchClients();
   }, []);
 
-  function fetchProjects() {
-    getProjects()
+  function fetchProjects(search = activeSearch) {
+    getProjects(search)
       .then(setProjects)
       .catch((err) => setError(err.message));
   }
@@ -26,12 +28,25 @@ export default function App() {
       .catch((err) => setError(err.message));
   }
 
+  function handleSearch(e) {
+    e.preventDefault();
+    const query = searchInput.trim();
+    setActiveSearch(query);
+    fetchProjects(query);
+  }
+
+  function handleClearSearch() {
+    setSearchInput("");
+    setActiveSearch("");
+    fetchProjects("");
+  }
+
   function handleStatusChange(projectId, newStatus) {
     setError("");
     updateStatus(projectId, newStatus)
       .then(() => {
         const updateProjects = projects.map((p) =>
-          p.id === projectId ? { ...p, status: newStatus } : p
+          p.id === projectId ? { ...p, status: newStatus } : p,
         );
         setProjects(updateProjects);
       })
@@ -49,7 +64,7 @@ export default function App() {
     })
       .then(() => {
         setNewProject({ name: "", client_id: "" });
-        fetchProjects();
+        fetchProjects(activeSearch);
       })
       .catch((err) => {
         setError(err.message);
@@ -66,7 +81,11 @@ export default function App() {
       {error && (
         <div className="error-banner">
           <span>{error}</span>
-          <button type="button" onClick={() => setError("")} aria-label="Close error">
+          <button
+            type="button"
+            onClick={() => setError("")}
+            aria-label="Close error"
+          >
             &times;
           </button>
         </div>
@@ -101,7 +120,27 @@ export default function App() {
       </section>
 
       <section className="project-list">
-        <h2>Projects</h2>
+        <div className="project-list-header">
+          <h2>Projects</h2>
+          <form className="search-bar" onSubmit={handleSearch}>
+            <input
+              type="text"
+              placeholder="Search by client name..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <button type="submit">Search</button>
+            {activeSearch && (
+              <button
+                type="button"
+                className="clear-search-btn"
+                onClick={handleClearSearch}
+              >
+                Clear
+              </button>
+            )}
+          </form>
+        </div>
         <table>
           <thead>
             <tr>
@@ -111,31 +150,41 @@ export default function App() {
             </tr>
           </thead>
           <tbody>
-            {projects.map((p) => (
-              <tr key={p.id}>
-                <td>{p.name}</td>
-                <td>{p.client_name}</td>
-                <td>
-                  <span className="status-badge">{p.status}</span>
-                  <select
-                    defaultValue=""
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        handleStatusChange(p.id, e.target.value);
-                      }
-                      e.target.value = "";
-                    }}
-                  >
-                    <option value="">Change status…</option>
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+            {projects.length === 0 ? (
+              <tr>
+                <td colSpan="3" className="no-projects">
+                  {activeSearch
+                    ? `No projects found for client "${activeSearch}"`
+                    : "No projects found"}
                 </td>
               </tr>
-            ))}
+            ) : (
+              projects.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.name}</td>
+                  <td>{p.client_name}</td>
+                  <td>
+                    <span className="status-badge">{p.status}</span>
+                    <select
+                      defaultValue=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleStatusChange(p.id, e.target.value);
+                        }
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="">Change status…</option>
+                      {STATUS_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </section>

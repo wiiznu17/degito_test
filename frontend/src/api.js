@@ -15,8 +15,9 @@ async function request(path, options = {}) {
   return data;
 }
 
-export function getProjects() {
-  return request("/api/projects");
+export function getProjects(client = "") {
+  const query = client ? `?client=${encodeURIComponent(client)}` : "";
+  return request(`/api/projects${query}`);
 }
 
 export function getClients() {
